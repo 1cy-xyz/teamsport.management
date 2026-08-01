@@ -25,21 +25,12 @@ class Profile(commands.Cog):
         name="profile",
         description="View your staff profile."
     )
+    @app_commands.checks.has_role(STAFF_ROLE_ID)
     async def profile(
         self,
         interaction: discord.Interaction,
         member: discord.Member = None
     ):
-
-        if not self.is_staff(interaction.user):
-
-            await interaction.response.send_message(
-                "❌ You must have the Staff role to use this command.",
-                ephemeral=True
-            )
-        
-            return
-
         member = member or interaction.user
 
         profile = await duty.get_profile(member.id)
