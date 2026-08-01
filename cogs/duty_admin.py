@@ -13,6 +13,8 @@ from utils.embeds import (
     info
 )
 
+from utils.logger import send_log
+
 
 class DutyAdmin(commands.GroupCog, name="dutyadmin"):
 
@@ -71,6 +73,17 @@ class DutyAdmin(commands.GroupCog, name="dutyadmin"):
         await duty.admin_create_shift(
             member.id,
             seconds
+        )
+
+        await send_log(
+            self.bot,
+            "🛠 Shift Created",
+            (
+                f"Admin: {interaction.user.mention}\n"
+                f"Staff: {member.mention}\n"
+                f"Duration: {hours}h"
+            ),
+            discord.Colour.orange()
         )
 
 
