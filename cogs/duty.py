@@ -7,6 +7,7 @@ from views.duty_view import DutyView
 from utils.embeds import success, error, info
 from utils.logger import send_log
 from config import STAFF_ROLE_ID
+from discord import app_commands
 
 def is_staff(self, member: discord.Member):
 
