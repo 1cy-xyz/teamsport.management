@@ -191,3 +191,146 @@ async def reset_week():
         """)
 
         await db.commit()
+
+# ===========================
+# ADMIN FUNCTIONS
+# ===========================
+
+
+async def admin_create_shift(
+    user_id: int,
+    duration: int
+):
+
+    async with aiosqlite.connect(DATABASE) as db:
+
+        now = datetime.utcnow()
+
+        await db.execute("""
+            INSERT INTO shifts
+            (
+                user_id,
+                start_time,
+                end_time,
+                duration,
+                active
+            )
+
+            VALUES (?, ?, ?, ?, 0)
+
+        """,
+        (
+            user_id,
+            now.isoformat(),
+            now.isoformat(),
+            duration
+        ))
+
+
+        await db.execute("""
+            INSERT OR IGNORE INTO users
+            (
+                user_id
+            )
+            VALUES (?)
+        """,
+        (
+            user_id,
+        ))
+
+
+        await db.execute("""
+            UPDATE users
+
+            SET
+
+            total_seconds = total_seconds + ?,
+            weekly_seconds = weekly_seconds + ?
+
+            WHERE user_id = ?
+
+        """,
+        (
+            duration,
+            duration,
+            user_id
+        ))
+
+
+        await db.commit()
+
+
+
+async def admin_delete_shift(
+    shift_id: int
+):
+
+    async with aiosqlite.connect(DATABASE) as db:
+
+
+        await db.execute("""
+            DELETE FROM shifts
+
+            WHERE id = ?
+
+        """,
+        (
+            shift_id,
+        ))
+
+
+        await db.commit()
+
+
+
+async def admin_reset_user(
+    user_id: int
+):
+
+    async with aiosqlite.connect(DATABASE) as db:
+
+
+        await db.execute("""
+            UPDATE users
+
+            SET weekly_seconds = 0
+
+            WHERE user_id = ?
+
+        """,
+        (
+            user_id,
+        ))
+
+
+        await db.commit()
+
+
+
+async def admin_get_shifts(
+    user_id: int
+):
+
+    async with aiosqlite.connect(DATABASE) as db:
+
+
+        cursor = await db.execute("""
+            SELECT
+
+            id,
+            duration,
+            start_time
+
+            FROM shifts
+
+            WHERE user_id = ?
+
+            ORDER BY id DESC
+
+        """,
+        (
+            user_id,
+        ))
+
+
+        return await cursor.fetchall()
