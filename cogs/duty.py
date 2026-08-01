@@ -58,6 +58,13 @@ class Duty(commands.Cog):
             user.id
         )
 
+        await send_log(
+            self.bot,
+            "🟢 Duty Started",
+            f"{user.mention} started their shift.",
+            discord.Colour.green()
+        )
+
 
         await interaction.response.send_message(
             embed=success(
@@ -86,6 +93,16 @@ class Duty(commands.Cog):
 
         duration = await duty.end_shift(
             interaction.user.id
+        )
+
+        await send_log(
+            self.bot,
+            "🔴 Duty Ended",
+            (
+                f"{interaction.user.mention} ended their shift.\n"
+                f"Duration: `{hours}h {minutes}m`"
+            ),
+            discord.Colour.red()
         )
 
 
