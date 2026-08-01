@@ -30,6 +30,7 @@ class Leaderboard(commands.Cog):
         name="dutyleaderboard",
         description="View the weekly staff duty leaderboard."
     )
+    @app_commands.checks.has_role(STAFF_ROLE_ID)
     async def duty_leaderboard(
         self,
         interaction: discord.Interaction
