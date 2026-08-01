@@ -29,4 +29,4 @@ DATABASE = "database/staff.db"
 
 TIMEZONE = os.getenv("TIMEZONE", "Europe/London")
 
-EMBED_COLOR = int(os.getenv("EMBED_COLOR", "0099ff"), 16)
+EMBED_COLOR = int(os.getenv("EMBED_COLOR", "0D8BE4"), 16)
