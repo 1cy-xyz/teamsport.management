@@ -4,6 +4,7 @@ from discord.ext import commands
 
 from database import duty
 from utils.embeds import leaderboard
+from config import STAFF_ROLE_ID
 
 
 def format_time(seconds: int):
