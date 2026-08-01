@@ -166,6 +166,7 @@ class Duty(commands.Cog):
         name="dutymanage",
         description="Manage your current shift."
     )
+    @app_commands.checks.has_role(STAFF_ROLE_ID)
     async def duty_manage(
         self,
         interaction: discord.Interaction
