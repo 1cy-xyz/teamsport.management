@@ -70,7 +70,15 @@ class StaffBot(commands.Bot):
 
         try:
 
-            synced = await self.tree.sync()
+            from config import GUILD_ID
+
+            guild = discord.Object(
+                id=GUILD_ID
+            )
+            
+            synced = await self.tree.sync(
+                guild=guild
+            )
 
             print(
                 f"Synced {len(synced)} commands"
