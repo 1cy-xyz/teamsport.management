@@ -26,20 +26,11 @@ class Statistics(commands.Cog):
         name="statistics",
         description="View staff statistics."
     )
+    @app_commands.checks.has_role(STAFF_ROLE_ID)
     async def statistics(
         self,
         interaction: discord.Interaction
     ):
-
-        if not self.is_staff(interaction.user):
-
-            await interaction.response.send_message(
-                "❌ You must have the Staff role to use this command.",
-                ephemeral=True
-            )
-        
-            return
-
         stats = await get_statistics()
 
         average = "0h"
