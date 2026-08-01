@@ -35,6 +35,14 @@ class Duty(commands.Cog):
         interaction: discord.Interaction
     ):
 
+        if not self.is_staff(interaction.user):
+
+            await interaction.response.send_message(
+                "❌ You must have the Staff role to use this command.",
+                ephemeral=True
+            )
+        
+            return
         user = interaction.user
 
 
@@ -99,6 +107,14 @@ class Duty(commands.Cog):
         interaction: discord.Interaction
     ):
 
+        if not self.is_staff(interaction.user):
+
+            await interaction.response.send_message(
+                "❌ You must have the Staff role to use this command.",
+                ephemeral=True
+            )
+        
+            return
         duration = await duty.end_shift(
             interaction.user.id
         )
@@ -161,6 +177,15 @@ class Duty(commands.Cog):
         self,
         interaction: discord.Interaction
     ):
+
+        if not self.is_staff(interaction.user):
+
+            await interaction.response.send_message(
+                "❌ You must have the Staff role to use this command.",
+                ephemeral=True
+            )
+        
+            return
 
         shift = await duty.get_active_shift(
             interaction.user.id
