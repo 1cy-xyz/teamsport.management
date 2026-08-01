@@ -5,6 +5,7 @@ from discord.ext import commands
 from database import duty
 from views.duty_view import DutyView
 from utils.embeds import success, error, info
+from utils.logger import send_log
 
 
 class Duty(commands.Cog):
