@@ -1,26 +1,30 @@
-import os
 import aiosqlite
 
 from config import DATABASE
 
-# Ensure the database folder exists
-os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
 
 
-async def setup_database():
-    async with aiosqlite.connect(DATABASE) as db:
+async def initialise_database():
 
-        # ===========================
-        # Users
-        # ===========================
+    async with aiosqlite.connect(
+        DATABASE
+    ) as db:
+
+
+        # ==========================
+        # Staff Users
+        # ==========================
 
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS users
+        (
 
             user_id INTEGER PRIMARY KEY,
+
             username TEXT,
 
             total_seconds INTEGER DEFAULT 0,
+
             weekly_seconds INTEGER DEFAULT 0,
 
             sessions_attended INTEGER DEFAULT 0
@@ -28,33 +32,40 @@ async def setup_database():
         )
         """)
 
-        # ===========================
+
+
+        # ==========================
         # Duty Shifts
-        # ===========================
+        # ==========================
 
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS shifts (
+        CREATE TABLE IF NOT EXISTS shifts
+        (
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
             user_id INTEGER,
 
             start_time TEXT,
+
             end_time TEXT,
 
-            duration INTEGER,
+            duration INTEGER DEFAULT 0,
 
-            active INTEGER DEFAULT 1
+            active INTEGER DEFAULT 0
 
         )
         """)
 
-        # ===========================
-        # Session Panels
-        # ===========================
+
+
+        # ==========================
+        # Sessions
+        # ==========================
 
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS sessions (
+        CREATE TABLE IF NOT EXISTS sessions
+        (
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -73,33 +84,44 @@ async def setup_database():
             session_time TEXT,
 
             created_at TEXT
+
         )
         """)
 
-        # ===========================
+
+
+        # ==========================
         # Session Attendance
-        # ===========================
+        # ==========================
 
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS attendance (
+        CREATE TABLE IF NOT EXISTS attendance
+        (
 
             session_id INTEGER,
 
             user_id INTEGER,
 
-            attending INTEGER,
+            attending INTEGER DEFAULT 0,
 
-            PRIMARY KEY(session_id, user_id)
+            PRIMARY KEY
+            (
+                session_id,
+                user_id
+            )
 
         )
         """)
 
-        # ===========================
+
+
+        # ==========================
         # Reminder Tracking
-        # ===========================
+        # ==========================
 
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS reminders (
+        CREATE TABLE IF NOT EXISTS reminders
+        (
 
             session_id INTEGER PRIMARY KEY,
 
@@ -108,20 +130,29 @@ async def setup_database():
         )
         """)
 
-        # ===========================
-        # Settings
-        # ===========================
+
+
+        # ==========================
+        # Bot Settings
+        # ==========================
 
         await db.execute("""
-        CREATE TABLE IF NOT EXISTS settings (
+        CREATE TABLE IF NOT EXISTS settings
+        (
 
-            key TEXT PRIMARY KEY,
+            setting TEXT PRIMARY KEY,
 
             value TEXT
 
         )
         """)
 
+
+
         await db.commit()
 
-    print("Database ready.")
+
+
+    print(
+        "Database initialised successfully."
+    )
