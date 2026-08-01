@@ -1,49 +1,36 @@
 import asyncio
-import aiosqlite
+from datetime import datetime, timedelta
 
-from datetime import datetime
-from zoneinfo import ZoneInfo
+import discord
+import pytz
 
-from config import DATABASE, TIMEZONE
-from database.duty import reset_week
-from utils.embeds import info
+from config import TIMEZONE
 
-
-LONDON = ZoneInfo(TIMEZONE)
+from database import duty
+from database import sessions
 
 
-class Scheduler:
 
-    def __init__(self, bot):
+timezone = pytz.timezone(
+    TIMEZONE
+)
 
-        self.bot = bot
-        self.last_reset = None
 
-    async def start(self):
 
-        await self.bot.wait_until_ready()
+# ==========================
+# Weekly Reset Checker
+# ==========================
 
-        while not self.bot.is_closed():
+async def weekly_reset():
 
-            try:
+    while True:
 
-                await self.check_session_reminders()
+        now = datetime.now(
+            timezone
+        )
 
-                await self.check_weekly_reset()
 
-            except Exception as e:
-
-                print(f"[Scheduler] {e}")
-
-            await asyncio.sleep(60)
-
-    # =====================================
-    # Weekly Reset
-    # =====================================
-
-    async def check_weekly_reset(self):
-
-        now = datetime.now(LONDON)
+        # Saturday 00:00
 
         if (
             now.weekday() == 5
@@ -51,144 +38,180 @@ class Scheduler:
             and now.minute == 0
         ):
 
-            today = now.date()
+            await duty.reset_week()
 
-            if self.last_reset != today:
 
-                print("Running weekly reset...")
+            print(
+                "Weekly duty reset completed."
+            )
 
-                await reset_week()
 
-                self.last_reset = today
+            # Wait an hour so it
+            # doesn't run repeatedly
 
-                print("Weekly leaderboard reset complete.")
+            await asyncio.sleep(
+                3600
+            )
 
-    # =====================================
-    # Session Reminders
-    # =====================================
 
-    async def check_session_reminders(self):
+        await asyncio.sleep(
+            60
+        )
 
-        now = datetime.now(LONDON)
 
-        current = now.strftime("%H:%M")
 
-        async with aiosqlite.connect(DATABASE) as db:
+# ==========================
+# Session Reminder System
+# ==========================
+
+async def session_reminders(
+    bot
+):
+
+    while True:
+
+        now = datetime.now(
+            timezone
+        )
+
+
+        # Get upcoming sessions
+
+        async with sessions.get_database() as db:
 
             cursor = await db.execute("""
-
-                SELECT
-
-                id,
-                host_name,
-                track,
-                session_time
+                SELECT *
 
                 FROM sessions
 
             """)
 
-            sessions = await cursor.fetchall()
 
-            for session in sessions:
+            session_list = await cursor.fetchall()
+
+
+
+        for session in session_list:
+
+
+            try:
 
                 session_id = session[0]
-                host = session[1]
-                track = session[2]
-                session_time = session[3]
 
-                if session_time != current:
-                    continue
+                session_time = datetime.fromisoformat(
+                    session[7]
+                )
 
-                reminder = await db.execute("""
 
-                    SELECT reminder_sent
+                session_time = timezone.localize(
+                    session_time
+                )
 
-                    FROM reminders
 
-                    WHERE session_id = ?
+                difference = (
+                    session_time - now
+                )
 
-                """, (session_id,))
 
-                reminder = await reminder.fetchone()
 
-                if reminder and reminder[0] == 1:
-                    continue
+                # Send reminder 30 minutes before
 
-                cursor = await db.execute("""
+                if (
+                    timedelta(minutes=29)
+                    <
+                    difference
+                    <
+                    timedelta(minutes=31)
+                ):
 
-                    SELECT user_id
 
-                    FROM attendance
+                    already_sent = await sessions.reminder_sent(
+                        session_id
+                    )
 
-                    WHERE session_id = ?
 
-                    AND attending = 1
+                    if not already_sent:
 
-                """, (session_id,))
 
-                users = await cursor.fetchall()
+                        attendees = await sessions.get_attendees(
+                            session_id
+                        )
 
-                for user in users:
 
-                    member = self.bot.get_user(user[0])
+                        for user in attendees:
 
-                    if member is None:
 
-                        try:
-                            member = await self.bot.fetch_user(user[0])
-                        except Exception:
-                            continue
+                            member = bot.get_user(
+                                user[0]
+                            )
 
-                    try:
 
-                        await member.send(
+                            if member:
 
-                            embed=info(
 
-                                "🏁 Session Reminder",
+                                embed = discord.Embed(
 
-                                (
-                                    "Your staff session starts now!\n\n"
+                                    title="🏁 Session Reminder",
 
-                                    f"**Host:** {host}\n"
+                                    description=(
 
-                                    f"**Track:** {track}\n"
+                                        "Your session starts in **30 minutes**.\n\n"
 
-                                    f"**Time:** {session_time}\n\n"
+                                        f"Track: **{session[6]}**\n"
 
-                                    "Please join the server."
+                                        f"Host: <@{session[4]}>"
+
+                                    ),
+
+                                    colour=discord.Colour.blue()
 
                                 )
 
-                            )
 
+                                await member.send(
+                                    embed=embed
+                                )
+
+
+                        await sessions.mark_reminder_sent(
+                            session_id
                         )
 
-                    except Exception:
 
-                        pass
+            except Exception as e:
 
-                await db.execute("""
-
-                    INSERT OR REPLACE INTO reminders
-
-                    (
-                        session_id,
-                        reminder_sent
-                    )
-
-                    VALUES (?, 1)
-
-                """, (session_id,))
-
-                await db.commit()
+                print(
+                    f"Reminder error: {e}"
+                )
 
 
-def start_scheduler(bot):
 
-    scheduler = Scheduler(bot)
+        await asyncio.sleep(
+            60
+        )
 
-    bot.loop.create_task(
-        scheduler.start()
+
+
+# ==========================
+# Start Scheduler
+# ==========================
+
+def start_scheduler(
+    bot
+):
+
+    asyncio.create_task(
+        weekly_reset()
+    )
+
+
+    asyncio.create_task(
+        session_reminders(
+            bot
+        )
+    )
+
+
+    print(
+        "Scheduler started."
     )
