@@ -17,6 +17,8 @@ SESSION_HOST_ROLE_ID = int(os.getenv("SESSION_HOST_ROLE_ID"))
 
 LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID"))
 
+STAFF_ROLE_ID = int(os.getenv("STAFF_ROLE_ID"))
+
 # ==========================
 # Database
 # ==========================
