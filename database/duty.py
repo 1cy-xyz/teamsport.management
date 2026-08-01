@@ -1,51 +1,48 @@
 import aiosqlite
+
 from datetime import datetime
+
 from config import DATABASE
 
 
-# ===========================
-# User Functions
-# ===========================
 
-async def create_user(user_id: int, username: str):
-    """Creates a user if they don't already exist."""
+# ==========================
+# Create User
+# ==========================
+
+async def create_user(
+    user_id,
+    username
+):
 
     async with aiosqlite.connect(DATABASE) as db:
 
         await db.execute("""
             INSERT OR IGNORE INTO users
-            (user_id, username)
+            (
+                user_id,
+                username
+            )
+
             VALUES (?, ?)
-        """, (user_id, username))
+
+        """,
+        (
+            user_id,
+            username
+        ))
 
         await db.commit()
 
 
-# ===========================
-# Active Shift
-# ===========================
 
-async def get_active_shift(user_id: int):
-
-    async with aiosqlite.connect(DATABASE) as db:
-
-        cursor = await db.execute("""
-            SELECT
-                id,
-                start_time
-            FROM shifts
-            WHERE user_id = ?
-            AND active = 1
-        """, (user_id,))
-
-        return await cursor.fetchone()
-
-
-# ===========================
+# ==========================
 # Start Shift
-# ===========================
+# ==========================
 
-async def start_shift(user_id: int):
+async def start_shift(
+    user_id
+):
 
     async with aiosqlite.connect(DATABASE) as db:
 
@@ -56,9 +53,11 @@ async def start_shift(user_id: int):
                 start_time,
                 active
             )
-            VALUES
-            (?, ?, 1)
-        """, (
+
+            VALUES (?, ?, 1)
+
+        """,
+        (
             user_id,
             datetime.utcnow().isoformat()
         ))
@@ -66,120 +65,170 @@ async def start_shift(user_id: int):
         await db.commit()
 
 
-# ===========================
-# End Shift
-# ===========================
 
-async def end_shift(user_id: int):
+# ==========================
+# Get Active Shift
+# ==========================
+
+async def get_active_shift(
+    user_id
+):
 
     async with aiosqlite.connect(DATABASE) as db:
 
         cursor = await db.execute("""
-            SELECT
-                id,
-                start_time
+            SELECT *
+
             FROM shifts
+
             WHERE user_id = ?
+
             AND active = 1
-        """, (user_id,))
+
+        """,
+        (
+            user_id,
+        ))
+
+        return await cursor.fetchone()
+
+
+
+# ==========================
+# End Shift
+# ==========================
+
+async def end_shift(
+    user_id
+):
+
+    async with aiosqlite.connect(DATABASE) as db:
+
+        cursor = await db.execute("""
+            SELECT id,start_time
+
+            FROM shifts
+
+            WHERE user_id = ?
+
+            AND active = 1
+
+        """,
+        (
+            user_id,
+        ))
 
         shift = await cursor.fetchone()
 
+
         if shift is None:
+
             return None
 
-        shift_id = shift[0]
-        start = datetime.fromisoformat(shift[1])
 
-        now = datetime.utcnow()
 
-        duration = int((now - start).total_seconds())
+        start = datetime.fromisoformat(
+            shift[1]
+        )
+
+
+        end = datetime.utcnow()
+
+
+        duration = int(
+            (end - start).total_seconds()
+        )
+
+
 
         await db.execute("""
             UPDATE shifts
+
             SET
 
-                end_time = ?,
-                duration = ?,
-                active = 0
+            end_time = ?,
+
+            duration = ?,
+
+            active = 0
 
             WHERE id = ?
-        """, (
-            now.isoformat(),
+
+        """,
+        (
+            end.isoformat(),
             duration,
-            shift_id
+            shift[0]
         ))
+
+
 
         await db.execute("""
             UPDATE users
+
             SET
 
-                total_seconds = total_seconds + ?,
-                weekly_seconds = weekly_seconds + ?
+            total_seconds =
+            total_seconds + ?,
+
+            weekly_seconds =
+            weekly_seconds + ?
 
             WHERE user_id = ?
-        """, (
+
+        """,
+        (
             duration,
             duration,
             user_id
         ))
 
+
+
         await db.commit()
+
 
         return duration
 
 
-# ===========================
-# Weekly Leaderboard
-# ===========================
 
-async def get_weekly_leaderboard(limit: int = 10):
+# ==========================
+# Weekly Leaderboard
+# ==========================
+
+async def get_weekly_leaderboard(
+    limit=10
+):
 
     async with aiosqlite.connect(DATABASE) as db:
 
+
         cursor = await db.execute("""
             SELECT
-                username,
-                weekly_seconds
+
+            username,
+
+            weekly_seconds
 
             FROM users
 
             ORDER BY weekly_seconds DESC
 
             LIMIT ?
-        """, (limit,))
+
+        """,
+        (
+            limit,
+        ))
+
 
         return await cursor.fetchall()
 
 
-# ===========================
-# Profile
-# ===========================
 
-async def get_profile(user_id: int):
-
-    async with aiosqlite.connect(DATABASE) as db:
-
-        cursor = await db.execute("""
-            SELECT
-
-                username,
-                total_seconds,
-                weekly_seconds,
-                sessions_attended
-
-            FROM users
-
-            WHERE user_id = ?
-
-        """, (user_id,))
-
-        return await cursor.fetchone()
-
-
-# ===========================
-# Weekly Reset
-# ===========================
+# ==========================
+# Reset Weekly Hours
+# ==========================
 
 async def reset_week():
 
@@ -187,36 +236,122 @@ async def reset_week():
 
         await db.execute("""
             UPDATE users
+
             SET weekly_seconds = 0
+
         """)
 
         await db.commit()
 
-# ===========================
-# ADMIN FUNCTIONS
-# ===========================
 
 
-async def admin_create_shift(
-    user_id: int,
-    duration: int
+# ==========================
+# Profile
+# ==========================
+
+async def get_profile(
+    user_id
 ):
 
     async with aiosqlite.connect(DATABASE) as db:
 
+        cursor = await db.execute("""
+            SELECT
+
+            username,
+
+            total_seconds,
+
+            weekly_seconds,
+
+            sessions_attended
+
+            FROM users
+
+            WHERE user_id = ?
+
+        """,
+        (
+            user_id,
+        ))
+
+
+        return await cursor.fetchone()
+
+
+
+# ==========================
+# Add Session Attendance
+# ==========================
+
+async def add_session_attendance(
+    user_id
+):
+
+    async with aiosqlite.connect(DATABASE) as db:
+
+        await db.execute("""
+            UPDATE users
+
+            SET sessions_attended =
+            sessions_attended + 1
+
+            WHERE user_id = ?
+
+        """,
+        (
+            user_id,
+        ))
+
+        await db.commit()
+
+
+
+# ==========================
+# Get All Staff
+# ==========================
+
+async def get_all_staff():
+
+    async with aiosqlite.connect(DATABASE) as db:
+
+        cursor = await db.execute("""
+            SELECT *
+
+            FROM users
+
+        """)
+
+        return await cursor.fetchall()
+
+
+
+# ==========================
+# Admin Create Shift
+# ==========================
+
+async def admin_create_shift(
+    user_id,
+    duration
+):
+
+    async with aiosqlite.connect(DATABASE) as db:
+
+
         now = datetime.utcnow()
+
 
         await db.execute("""
             INSERT INTO shifts
+
             (
                 user_id,
                 start_time,
                 end_time,
-                duration,
-                active
+                duration
             )
 
-            VALUES (?, ?, ?, ?, 0)
+            VALUES (?, ?, ?, ?)
 
         """,
         (
@@ -228,24 +363,15 @@ async def admin_create_shift(
 
 
         await db.execute("""
-            INSERT OR IGNORE INTO users
-            (
-                user_id
-            )
-            VALUES (?)
-        """,
-        (
-            user_id,
-        ))
-
-
-        await db.execute("""
             UPDATE users
 
             SET
 
-            total_seconds = total_seconds + ?,
-            weekly_seconds = weekly_seconds + ?
+            total_seconds =
+            total_seconds + ?,
+
+            weekly_seconds =
+            weekly_seconds + ?
 
             WHERE user_id = ?
 
@@ -261,12 +387,15 @@ async def admin_create_shift(
 
 
 
+# ==========================
+# Admin Delete Shift
+# ==========================
+
 async def admin_delete_shift(
-    shift_id: int
+    shift_id
 ):
 
     async with aiosqlite.connect(DATABASE) as db:
-
 
         await db.execute("""
             DELETE FROM shifts
@@ -278,17 +407,19 @@ async def admin_delete_shift(
             shift_id,
         ))
 
-
         await db.commit()
 
 
 
+# ==========================
+# Admin Reset User
+# ==========================
+
 async def admin_reset_user(
-    user_id: int
+    user_id
 ):
 
     async with aiosqlite.connect(DATABASE) as db:
-
 
         await db.execute("""
             UPDATE users
@@ -302,17 +433,19 @@ async def admin_reset_user(
             user_id,
         ))
 
-
         await db.commit()
 
 
 
+# ==========================
+# Admin History
+# ==========================
+
 async def admin_get_shifts(
-    user_id: int
+    user_id
 ):
 
     async with aiosqlite.connect(DATABASE) as db:
-
 
         cursor = await db.execute("""
             SELECT
