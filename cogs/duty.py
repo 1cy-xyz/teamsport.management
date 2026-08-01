@@ -94,6 +94,7 @@ class Duty(commands.Cog):
         name="dutyend",
         description="End your current staff shift."
     )
+    @app_commands.checks.has_role(STAFF_ROLE_ID)
     async def duty_end(
         self,
         interaction: discord.Interaction
