@@ -3,6 +3,11 @@ import aiosqlite
 from config import DATABASE
 
 
+def get_database():
+
+    return aiosqlite.connect(
+        DATABASE
+    )
 
 # ==========================
 # Create Session
