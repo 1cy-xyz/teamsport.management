@@ -17,6 +17,7 @@ from utils.embeds import (
     success
 )
 
+from utils.logger import send_log
 
 class Sessions(commands.Cog):
 
@@ -118,6 +119,17 @@ class Sessions(commands.Cog):
             view=SessionView(
                 session_id
             )
+        )
+
+        await send_log(
+            self.bot,
+            "🏁 Session Created",
+            (
+                f"Host: {host.mention}\n"
+                f"Track: {track}\n"
+                f"Time: {time}"
+            ),
+            discord.Colour.blue()
         )
 
 
