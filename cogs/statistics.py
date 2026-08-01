@@ -30,6 +30,15 @@ class Statistics(commands.Cog):
         interaction: discord.Interaction
     ):
 
+        if not self.is_staff(interaction.user):
+
+            await interaction.response.send_message(
+                "❌ You must have the Staff role to use this command.",
+                ephemeral=True
+            )
+        
+            return
+
         stats = await get_statistics()
 
         average = "0h"
