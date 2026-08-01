@@ -133,6 +133,16 @@ class DutyAdmin(commands.GroupCog, name="dutyadmin"):
             shift_id
         )
 
+        await send_log(
+            self.bot,
+            "🗑 Shift Deleted",
+            (
+                f"Admin: {interaction.user.mention}\n"
+                f"Shift ID: `{shift_id}`"
+            ),
+            discord.Colour.red()
+        )
+
 
         await interaction.response.send_message(
             embed=success(
