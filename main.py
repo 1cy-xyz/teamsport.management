@@ -10,6 +10,8 @@ from utils.scheduler import start_scheduler
 
 from database.database import initialise_database
 
+from utils.webserver import keep_alive
+
 
 # ==========================
 # Bot Configuration
@@ -135,6 +137,8 @@ async def main():
 
 
 if __name__ == "__main__":
+
+    keep_alive()
 
     asyncio.run(
         main()
