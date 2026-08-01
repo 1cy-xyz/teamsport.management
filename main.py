@@ -69,9 +69,8 @@ class StaffBot(commands.Bot):
 
 
         try:
-
             from config import GUILD_ID
-
+            
             guild = discord.Object(
                 id=GUILD_ID
             )
