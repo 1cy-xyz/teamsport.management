@@ -1,0 +1,33 @@
+# Python
+
+__pycache__/
+*.pyc
+
+
+# Environment
+
+.env
+
+
+# Database
+
+*.db
+*.sqlite
+*.sqlite3
+
+
+# Logs
+
+logs/
+
+
+# IDE
+
+.vscode/
+.idea/
+
+
+# OS
+
+.DS_Store
+Thumbs.db
