@@ -4,6 +4,7 @@ from discord.ext import commands
 
 from database.statistics import get_statistics
 from utils.embeds import info
+from config import STAFF_ROLE_ID
 
 
 def format_time(seconds):
